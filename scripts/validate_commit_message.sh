@@ -59,7 +59,9 @@ if [ -z "${msg//[[:space:]]/}" ]; then
   err "message is empty"; echo "fail"; exit 1
 fi
 
-mapfile -t lines <<< "$msg"
+# Split into lines without mapfile, which macOS's /bin/bash 3.2 lacks.
+lines=()
+while IFS= read -r l; do lines+=("$l"); done <<< "$msg"
 header="${lines[0]}"
 
 # ---- Header ---------------------------------------------------------------

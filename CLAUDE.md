@@ -13,6 +13,15 @@ A Claude Code skill (`/commit`) that drafts Conventional Commit v1.0.0 messages 
 
 `SKILL.md` calls the validator by absolute path, `~/.claude/skills/commit/scripts/validate_commit_message.sh`, because at runtime the working directory is the user's repo, not this folder. That same path also appears in `allowed-tools`. This development copy lives elsewhere, so the skill only works once this folder is available at `~/.claude/skills/commit`. If you rename the script or move it, update both the `allowed-tools` entry and every `VALIDATE` reference in `SKILL.md`.
 
+### Project copy in `.claude/skills/commit`
+
+The repo also contains a project-level copy of the skill at `.claude/skills/commit/`, so `/commit` works inside this repo. The root `SKILL.md` and `scripts/` are the source of truth. After changing them, copy them over again. In the copy, the validator path is repo-relative (`.claude/skills/commit/scripts/validate_commit_message.sh`) in `allowed-tools`, in the `VALIDATE` definition, and in the section 6 example. Those three lines plus the sentence after `VALIDATE` are the only intended differences:
+
+```bash
+diff SKILL.md .claude/skills/commit/SKILL.md
+diff scripts/validate_commit_message.sh .claude/skills/commit/scripts/validate_commit_message.sh
+```
+
 `allowed-tools` is deliberately narrow: read-only git commands plus `git commit -F -`, with no `git add`, `restore`, `push`, or `--amend`. That enforces the skill's hard rules. Any new command the instructions rely on has to be added there too.
 
 ## Validator
@@ -36,6 +45,6 @@ Behaviors that are easy to break when you edit it:
 
 There is no test suite. To verify a change, pipe sample messages through the script and check the output and exit code.
 
-### Known issue: Bash 3.2
+### Bash 3.2 compatibility
 
-The script uses `mapfile` (Bash 4+). On macOS, `#!/usr/bin/env bash` resolves to `/bin/bash` 3.2 unless a newer Bash comes first on `PATH`. In that case every message fails with `mapfile: command not found` and exit 1. Keep the script Bash 3.2-compatible, for example by filling `lines` with a `while IFS= read -r` loop.
+On macOS, `#!/usr/bin/env bash` resolves to `/bin/bash` 3.2 unless a newer Bash comes first on `PATH`, so the script must stay Bash 3.2-compatible. Avoid Bash 4+ features such as `mapfile`/`readarray`, associative arrays, and `${var,,}`/`${var^^}` case conversion. That is why `lines` is filled with a `while IFS= read -r` loop. Test changes with `/bin/bash scripts/validate_commit_message.sh`.
