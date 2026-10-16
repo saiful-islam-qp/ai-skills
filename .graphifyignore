@@ -1,0 +1,3 @@
+# Tooling, not project content: graphify's own skill docs and the
+# project copy of /commit (duplicates the root SKILL.md and scripts/).
+.claude/
